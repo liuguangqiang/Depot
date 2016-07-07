@@ -119,17 +119,17 @@ public class Depot {
         }).subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread());
     }
 
-    public Observable<Boolean> putWithAsync(final String key, final Type type) {
-        return putWithAsync(key, type, 0);
+    public Observable<Boolean> putWithAsync(final String key, final Object object) {
+        return putWithAsync(key, object, 0);
     }
 
-    public Observable<Boolean> putWithAsync(final String key, final Type type, final long expire) {
+    public Observable<Boolean> putWithAsync(final String key, final Object object, final long expire) {
         chkInitialised();
         return Observable.create(new Observable.OnSubscribe<Boolean>() {
             @Override
             public void call(Subscriber<? super Boolean> subscriber) {
                 try {
-                    put(key, type, expire);
+                    put(key, object, expire);
                     subscriber.onNext(true);
                     subscriber.onCompleted();
                 } catch (Exception exception) {
