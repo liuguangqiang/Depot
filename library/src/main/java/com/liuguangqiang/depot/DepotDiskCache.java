@@ -6,10 +6,6 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
-import java.math.BigInteger;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 
 /**
  * Implemented a cache utils by DiskLruCache.
@@ -27,7 +23,7 @@ class DepotDiskCache {
     void put(String key, String value) {
         DiskLruCache.Editor editor;
         try {
-            editor = diskLruCache.edit(getKey(key));
+            editor = diskLruCache.edit(Utils.getKey(key));
             if (editor != null) {
                 if (writeEditor(value, editor)) {
                     diskLruCache.flush();
@@ -53,7 +49,7 @@ class DepotDiskCache {
         String value = null;
         DiskLruCache.Snapshot snapshot = null;
         try {
-            snapshot = diskLruCache.get(getKey(key));
+            snapshot = diskLruCache.get(Utils.getKey(key));
             if (snapshot == null) {
                 value = null;
             } else {
@@ -71,7 +67,7 @@ class DepotDiskCache {
 
     boolean contains(String key) {
         try {
-            DiskLruCache.Snapshot snapshot = diskLruCache.get(getKey(key));
+            DiskLruCache.Snapshot snapshot = diskLruCache.get(Utils.getKey(key));
             if (snapshot == null) {
                 return false;
             }
@@ -96,20 +92,6 @@ class DepotDiskCache {
         }
 
         return true;
-    }
-
-    private String getKey(String key) {
-        try {
-            MessageDigest m = MessageDigest.getInstance("MD5");
-            m.update(key.getBytes("UTF-8"));
-            byte[] digest = m.digest();
-            BigInteger bigInt = new BigInteger(1, digest);
-            return bigInt.toString(16);
-        } catch (NoSuchAlgorithmException e) {
-            throw new AssertionError();
-        } catch (UnsupportedEncodingException e) {
-            throw new AssertionError();
-        }
     }
 
 }
