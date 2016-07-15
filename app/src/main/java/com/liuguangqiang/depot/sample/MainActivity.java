@@ -7,6 +7,7 @@ import android.util.Log;
 import com.liuguangqiang.depot.Depot;
 
 import java.util.HashMap;
+import java.util.logging.Logger;
 
 import rx.Observable;
 import rx.Observer;
@@ -22,40 +23,13 @@ public class MainActivity extends AppCompatActivity {
 
         Depot.getInstance().init(getApplicationContext());
 
-        if (Depot.getInstance().contains("hashMap")) {
-            Log.i(TAG, "init from disk");
-        } else {
-            Log.i(TAG, "init from new object");
-        }
+        Depot.getInstance().put("key2", "2", 10, false);
 
-        Depot.getInstance().put("key", "abc");
+        Log.i(TAG, "nowTimestamp:" + Depot.getInstance().nowTimestamp());
 
-        HashMap<String, String> hashMap = new HashMap<>();
-        hashMap.put("test", "1234567");
-        Depot.getInstance().put("hashMap", hashMap);
+        Log.i(TAG, "" + Depot.getInstance().getExpire("key2"));
+        Log.i(TAG, "key2 is expired:" + Depot.getInstance().isExpired("key2"));
+        Log.i(TAG, Depot.getInstance().get("key2"));
 
-        Log.i(TAG, Depot.getInstance().get("key"));
-
-        if (!Depot.getInstance().isExpired("key1")) {
-            Log.i(TAG, Depot.getInstance().get("key1"));
-        }
-
-        Observable<HashMap<String, String>> result = Depot.getInstance().getWithAsync("hashMap", HashMap.class);
-        result.subscribe(new Observer<HashMap<String, String>>() {
-            @Override
-            public void onCompleted() {
-
-            }
-
-            @Override
-            public void onError(Throwable e) {
-
-            }
-
-            @Override
-            public void onNext(HashMap<String, String> hashMap) {
-                Log.i(TAG, hashMap.get("test"));
-            }
-        });
     }
 }

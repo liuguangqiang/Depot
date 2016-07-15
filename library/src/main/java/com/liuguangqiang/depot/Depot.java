@@ -58,6 +58,7 @@ public class Depot {
         if (!isExpired(key)) {
             return depotDiskCache.get(key);
         } else {
+            Log.e(TAG, key + "has expired or removed.");
             remove(key);
             return null;
         }
@@ -66,15 +67,25 @@ public class Depot {
     public <T> T get(String key, Type type) {
         chkInitialised();
 
-        return gson.fromJson(get(key), type);
+        if (!isExpired(key)) {
+            return gson.fromJson(get(key), type);
+        } else {
+            Log.e(TAG, key + "has expired or removed.");
+            remove(key);
+            return null;
+        }
     }
 
     public void put(String key, String value) {
-        put(key, value, 0, false);
+        put(key, value, 0, true);
     }
 
     public void put(String key, Object object) {
-        put(key, object, 0, false);
+        put(key, object, 0, true);
+    }
+
+    public void put(String key, Object object, long expire) {
+        put(key, object, expire, true);
     }
 
     public void put(String key, Object object, long expire, boolean updateExpire) {
@@ -91,10 +102,10 @@ public class Depot {
         chkInitialised();
         depotDiskCache.put(key, value);
 
-        if (expire > 0 && updateExpire) {
+        if (expire > 0 && (updateExpire || !contains(key + suffix))) {
+            //需要更新，或者没有存入过期时间，才保存一个新的过期时间
+            Log.i(TAG, "update expire time");
             depotDiskCache.put(key + suffix, "" + (nowTimestamp() + expire));
-        } else {
-            depotDiskCache.put(key + suffix, "" + 0);
         }
     }
 
@@ -142,7 +153,7 @@ public class Depot {
     }
 
     public Observable<Boolean> putWithAsync(final String key, final Object object) {
-        return putWithAsync(key, object, 0, false);
+        return putWithAsync(key, object, 0, true);
     }
 
     public Observable<Boolean> putWithAsync(final String key, final Object object, final long expire, final boolean updateExpire) {
@@ -161,24 +172,25 @@ public class Depot {
         }).subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread());
     }
 
+    /**
+     * 是否过期
+     *
+     * @param key
+     * @return
+     */
     public boolean isExpired(String key) {
-        long expire = getExpire(key);
-        if (expire == 0 || expire > nowTimestamp()) {
-            return false;
-        }
-        Log.i(TAG, key + " has expired or removed.");
-        return true;
+        return getExpire(key) < nowTimestamp();
     }
 
-    private long getExpire(String key) {
+    public long getExpire(String key) {
         if (contains(key + suffix)) {
             return Long.parseLong(depotDiskCache.get(key + suffix));
         } else {
-            return -1;
+            return 0;
         }
     }
 
-    private long nowTimestamp() {
+    public long nowTimestamp() {
         return System.currentTimeMillis() / 1000;
     }
 
